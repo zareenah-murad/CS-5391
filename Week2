@@ -103,7 +103,7 @@ Summary: scans directories to identify documents, extracts text from documents, 
 ``` 
 
 
-***embeddings.py***
+**embeddings.py**
 Summary: converts document text into numerical vectors (embeddings) using the sentence-transformers pre-trained models, normalizes the embeddings to unit length for cosine similarity, stores the generated normalized embeddings into a FAISS (Facebook AI Similarity Search) index, save the FAISS index for later retrieval
 ```
       # this script converts documents into vector embeddings using sentence-transformers and stores them in a FAISS index
@@ -139,7 +139,7 @@ Summary: converts document text into numerical vectors (embeddings) using the se
           faiss.write_index(index, index_file)
 ```
 
-***query.py***
+**query.py**
 Summary: queries the FAISS index to retrieve the most relevant documents using cosine similarity according to the user query
 ```
       # this script queries the FAISS index based on user input
@@ -163,7 +163,7 @@ Summary: queries the FAISS index to retrieve the most relevant documents using c
           return D, I
 ```
 
-***response_generator.py***
+**response_generator.py**
 Summary: handles the setup and execution of LLaMA3, uses the pre-trained LLM to generate responses based on the context provided by the document indices
 ```
       # this script generates a response to the query by creating a context from the documents and appending that to the query using LLaMA3
@@ -187,7 +187,7 @@ Summary: handles the setup and execution of LLaMA3, uses the pre-trained LLM to 
           return tokenizer.decode(output[0], skip_special_tokens=True)
 ```
 
-***search_engine.py***
+**search_engine.py**
 Summary: controls the workflow of the search engine
 ```
       # this script controls the main flow of the search engine
@@ -239,7 +239,7 @@ Summary: controls the workflow of the search engine
           main()
 ```
 
-***test.py***
+**test.py**
 ```
       # this script tests the search engine
       
