@@ -53,7 +53,8 @@
 ### Code
 
 **document_processor.py**
-Summary: scans directories to identify documents, extracts text from documents, and categorizes documents based on type
+
+Scans directories to identify documents, extracts text from documents, and categorizes documents based on type.
 ``` 
       # this script scans the user's directories for documents, categorizes them, and extracts text
       
@@ -104,7 +105,8 @@ Summary: scans directories to identify documents, extracts text from documents, 
 
 
 **embeddings.py**
-Summary: converts document text into numerical vectors (embeddings) using the sentence-transformers pre-trained models, normalizes the embeddings to unit length for cosine similarity, stores the generated normalized embeddings into a FAISS (Facebook AI Similarity Search) index, save the FAISS index for later retrieval
+
+Converts document text into numerical vectors (embeddings) using the sentence-transformers pre-trained models, normalizes the embeddings to unit length for cosine similarity, stores the generated normalized embeddings into a FAISS (Facebook AI Similarity Search) index, save the FAISS index for later retrieval.
 ```
       # this script converts documents into vector embeddings using sentence-transformers and stores them in a FAISS index
       
@@ -140,7 +142,8 @@ Summary: converts document text into numerical vectors (embeddings) using the se
 ```
 
 **query.py**
-Summary: queries the FAISS index to retrieve the most relevant documents using cosine similarity according to the user query
+
+Queries the FAISS index to retrieve the most relevant documents using cosine similarity according to the user query.
 ```
       # this script queries the FAISS index based on user input
       
@@ -164,7 +167,8 @@ Summary: queries the FAISS index to retrieve the most relevant documents using c
 ```
 
 **response_generator.py**
-Summary: handles the setup and execution of LLaMA3, uses the pre-trained LLM to generate responses based on the context provided by the document indices
+
+Handles the setup and execution of LLaMA3, uses the pre-trained LLM to generate responses based on the context provided by the document indices.
 ```
       # this script generates a response to the query by creating a context from the documents and appending that to the query using LLaMA3
       
@@ -188,7 +192,8 @@ Summary: handles the setup and execution of LLaMA3, uses the pre-trained LLM to 
 ```
 
 **search_engine.py**
-Summary: controls the workflow of the search engine
+
+Controls the workflow of the search engine.
 ```
       # this script controls the main flow of the search engine
       
