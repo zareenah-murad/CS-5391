@@ -2,6 +2,340 @@
 Weekly progress updates for our CS 5391 Project exploring Retrieval Augmented Generation and Large Language Models.
 
 
+## Week 2
+
+**Article Notes: How to build a generative search engine for your local files using Llama3**
+* https://towardsdatascience.com/how-to-build-a-generative-search-engine-for-your-local-files-using-llama-3-399551786965
+* System design: an index with the context of the local files and an information retrieval engine to retrieve the most relevant documents, a language model to use selected content from local documents and generate a summarized answer, a user interface 
+* Basic process: index local files, when a user asks a questions you’d use embeddings or something to find the most relevant documents, then pass the user query and documents to the LLM which would use the content of the documents to generate answers 
+* Use Qdrant as vector storage
+* Asymmetric search problems: when you have short queries and long documents proper information retrieval may fail
+* This model uses dot product, cosine similarity could work but it only focuses on difference in angles, and dot product consider angle and magnitude
+* BERT like models have limited context size, so you can either consider the first 512 tokens of the document and ignore the rest or chunk the document and store it in the index (using prebuilt chunker from LangChain)
+* File retrieval is recursive, the user defines a folder they want to index, the indexer retrieves all files from that folder and subfolders recursively and indexes supported file types (PDF, Word, PPT, TXT)
+* Will use different python libraries to read through the documents
+* Use TokenTextSplitter from LangChain to create chunks of 500 tokens with 50 token overlap 
+* Create a web service using FastAPI to host the generative search engine
+* API will access the Qdrant client with the indexed data, perform a search for vector similarity, use the top chunks to generate an answer with Llama 3, and return an answer
+* Create user interface using Streamlit
+* Note: his version was designed on a M2 Mac with 32GB RAM, my laptop is M1 and 16GB RAM, so need to use 8B parameter model
+
+##
+
+**Working Off of Nikola's Project**
+* Forked his Github: https://github.com/nikolamilosevic86/local-genAI-search
+* Installed all requirements: %cd local-gen-search, %pip install -r requirements.txt
+* Got NVIDIA and Hugging Face API Keys
+* Requested access to Llama3 model on Hugging Face
+* Generated sample files to index
+* Ran index.py on the test files: %python3 index.py TestFolder
+* This created a qdrant client index locally and indexed all files in the folder and its subfolders with extensions pdf, txt, docx, pptx
+* Indexing was succesful!
+* Ran the generative search service: %python uvicorn_start.py
+* Got a bunch of errors because I didn't create an environment_var.py file with my HF and NVIDIA API keys
+* Another error, needed to install: %pip install -U langchain-huggingface
+* Then modified index.py and api.py to import from langchain_huggingface
+* Tried to run the generative search service, but there were a BUNCH of error
+* Example: "storage folder qdrant/ is already accessed by another instance of Qdrant client. If you require concurrent access, use Qdrant server instead"
+
+**Change of Plans!**
+* Discussed with Dr. C at our weekly meeting
+* Instead of trying to work off of Nikola's project, I'm going to make my own search service
+* The idea is to start simple with basic functionality and then move from there
+* Plan: use sentence-transformers to make embeddings, use FAISS for vector storage and querying, use LLaMA3 to generate responses
+
+**Progress on Local Search AI**
+* Setup: ensured that PyPDF2, python-docx, and openpyxl were installed
+* Created a virtual environment: %python3 -m venv env, %source env/bin/activate, %pip install -U pip
+* Decided to build the project in components: document_processor, embeddings, query, response_generator, and search_engine
+* I used ChatGPT and Copilot to get a start on each of the scripts and used PyCharm as an editor
+* Created a test.py file to debug and check the search engine
+* Had a problem with installing fais, I needed to do %pip install faiss-cpu 
+* Needed to install packages in the virtual environment: %pip install numpy, pypdf2, docx, openpyxl, faiss-cpu, sentence-transformers
+* Had lots of errors, instead of having one overarching test file I'm going to create test scripts for each component of the project
+
+### Code
+
+**document_processor.py**
+
+Scans directories to identify documents, extracts text from documents, and categorizes documents based on type.
+``` 
+      # this script scans the user's directories for documents, categorizes them, and extracts text
+      
+      import os
+      import json
+      from PyPDF2 import PdfReader
+      import docx
+      import openpyxl
+      
+      
+      def scan_directories(base_path):
+          documents = {'pdf': [], 'word': [], 'excel': []}
+          for root, _, files in os.walk(base_path):
+              for file in files:
+                  path = os.path.join(root, file)
+                  if file.endswith('.pdf'):
+                      documents['pdf'].append(path)
+                  elif file.endswith('.docx'):
+                      documents['word'].append(path)
+                  elif file.endswith('.xlsx'):
+                      documents['excel'].append(path)
+          return documents
+      
+      
+      def extract_text_from_document(path):
+          if path.endswith('.pdf'):
+              reader = PdfReader(path)
+              return ''.join([page.extract_text() for page in reader.pages])
+          elif path.endswith('.docx'):
+              doc = docx.Document(path)
+              return ''.join([para.text for para in doc.paragraphs])
+          elif path.endswith('.xlsx'):
+              wb = openpyxl.load_workbook(path)
+              sheet = wb.active
+              return ''.join([str(cell.value) for row in sheet.iter_rows() for cell in row])
+      
+      
+      base_path = '/Users/zm/Desktop/CS5391/TestFiles'
+      documents = scan_directories(base_path)
+      
+      # example of categorizing based on simple keyword in path
+      categorized_documents = {course: [extract_text_from_document(path) for path in paths]
+                               for course, paths in documents.items()}
+      
+      with open('categorized_documents.json', 'w') as f:
+          json.dump(categorized_documents, f)
+``` 
+
+
+**embeddings.py**
+
+Converts document text into numerical vectors (embeddings) using the sentence-transformers pre-trained models, normalizes the embeddings to unit length for cosine similarity, stores the generated normalized embeddings into a FAISS (Facebook AI Similarity Search) index, save the FAISS index for later retrieval.
+```
+      # this script converts documents into vector embeddings using sentence-transformers and stores them in a FAISS index
+      
+      import numpy as np
+      import faiss
+      from sentence_transformers import SentenceTransformer
+      
+      model = SentenceTransformer('all-MiniLM-L6-v2')
+      
+      
+      def normalize_embeddings(embeddings):
+          norms = np.linalg.norm(embeddings, axis=1, keepdims=True)
+          return embeddings / norms
+      
+      
+      def embed_documents(categorized_documents):
+          # Assuming categorized_documents is a dictionary with course names as keys and lists of document texts as values
+          embeddings = {course: model.encode(doc_texts) for course, doc_texts in categorized_documents.items()}
+          normalized_embeddings = {course: normalize_embeddings(np.array(vecs)) for course, vecs in embeddings.items()}
+          return normalized_embeddings
+      
+      
+      def store_embeddings_in_faiss(embeddings):
+          dimension = 384  # Assuming 384-dimensional embeddings
+          index = faiss.IndexFlatIP(dimension)  # Inner Product (IP) is equivalent to cosine similarity after normalization
+          for vecs in embeddings.values():
+              index.add(np.array(vecs))
+          return index
+      
+      
+      def save_faiss_index(index, index_file):
+          faiss.write_index(index, index_file)
+```
+
+**query.py**
+
+Queries the FAISS index to retrieve the most relevant documents using cosine similarity according to the user query.
+```
+      # this script queries the FAISS index based on user input
+      
+      import faiss
+      from embedding import normalize_embeddings, model  # Import the normalize function and the model
+      
+      INDEX_FILE = 'document_index.faiss'
+      
+      
+      def query_index(query_text, top_k=5):
+          index = faiss.read_index(INDEX_FILE)
+      
+          # Convert query text to embedding
+          query_embedding = model.encode([query_text])
+      
+          # Normalize the query embedding
+          query_embedding = normalize_embeddings(query_embedding)
+      
+          D, I = index.search(query_embedding, top_k)
+          return D, I
+```
+
+**response_generator.py**
+
+Handles the setup and execution of LLaMA3, uses the pre-trained LLM to generate responses based on the context provided by the document indices.
+```
+      # this script generates a response to the query by creating a context from the documents and appending that to the query using LLaMA3
+      
+      from transformers import AutoTokenizer, AutoModelForCausalLM
+      
+      MODEL_NAME = "huggingface/llama-7b"
+      
+      
+      def generate_response(query, indices):
+          tokenizer = AutoTokenizer.from_pretrained(MODEL_NAME)
+          model = AutoModelForCausalLM.from_pretrained(MODEL_NAME)
+      
+          # Construct context from retrieved document indices
+          context = ' '.join([categorized_documents[course][i] for i in indices[0]])
+      
+          input_text = f"Context: {context}\n\nQuery: {query}\nAnswer:"
+          input_ids = tokenizer.encode(input_text, return_tensors='pt')
+          output = model.generate(input_ids, max_length=200)
+      
+          return tokenizer.decode(output[0], skip_special_tokens=True)
+```
+
+**search_engine.py**
+
+Controls the workflow of the search engine.
+```
+      # this script controls the main flow of the search engine
+      
+      
+      import os
+      import json
+      import numpy as np
+      from document_processor import scan_directories, extract_text_from_document
+      from embeddings import embed_documents, store_embeddings_in_faiss, save_faiss_index
+      from query import query_index
+      from response_generator import generate_response
+      
+      # Constants
+      BASE_PATH = '/Users/zm/Desktop/CS5391/TestFiles'
+      EMBEDDINGS_FILE = 'embeddings.npy'
+      INDEX_FILE = 'document_index.faiss'
+      QUERY = "Python code for data analysis"
+      
+      
+      def main():
+          # Step 1: Document scanning and categorization
+          documents = scan_directories(BASE_PATH)
+      
+          # Simulate categorization based on file extension
+          categorized_documents = {course: [extract_text_from_document(path) for path in paths]
+                                   for course, paths in documents.items()}
+      
+          with open('categorized_documents.json', 'w') as f:
+              json.dump(categorized_documents, f)
+      
+          # Step 2: Embedding documents
+          embeddings = embed_documents(categorized_documents)
+          np.save(EMBEDDINGS_FILE, embeddings)
+      
+          # Step 3: Store embeddings in FAISS index
+          index = store_embeddings_in_faiss(embeddings)
+          save_faiss_index(index, INDEX_FILE)
+      
+          # Step 4: Query the FAISS index
+          D, I = query_index(QUERY)
+      
+          # Step 5: Generate response using LLaMA
+          response = generate_response(QUERY, I)
+          print(response)
+      
+      
+      if __name__ == "__main__":
+          main()
+```
+
+**test.py**
+```
+      # this script tests the search engine
+      
+      import os
+      import unittest
+      import json
+      import numpy as np
+      from document_processor import scan_directories, extract_text_from_document
+      from embeddings import embed_documents, store_embeddings_in_faiss, save_faiss_index
+      from query import query_index
+      from response_generator import generate_response
+      
+      
+      class TestIntegration(unittest.TestCase):
+          @classmethod
+          def setUpClass(cls):
+              cls.base_path = 'test_documents'
+              cls.embeddings_file = 'test_embeddings.npy'
+              cls.index_file = 'test_document_index.faiss'
+              cls.query = "Sample query"
+              cls.test_documents = {
+                  'pdf': 'sample.pdf',
+                  'word': 'sample.docx',
+                  'excel': 'sample.xlsx'
+              }
+              cls.categorized_documents_file = 'test_categorized_documents.json'
+      
+              # Create test directories and files
+              os.makedirs(cls.base_path, exist_ok=True)
+              for doc_type, filename in cls.test_documents.items():
+                  dir_path = os.path.join(cls.base_path, doc_type)
+                  os.makedirs(dir_path, exist_ok=True)
+                  file_path = os.path.join(dir_path, filename)
+                  with open(file_path, 'w') as f:
+                      f.write("This is a test document content for {}.".format(doc_type))
+      
+          @classmethod
+          def tearDownClass(cls):
+              # Remove created files and directories
+              for root, dirs, files in os.walk(cls.base_path, topdown=False):
+                  for name in files:
+                      os.remove(os.path.join(root, name))
+                  for name in dirs:
+                      os.rmdir(os.path.join(root, name))
+              os.rmdir(cls.base_path)
+              if os.path.exists(cls.embeddings_file):
+                  os.remove(cls.embeddings_file)
+              if os.path.exists(cls.index_file):
+                  os.remove(cls.index_file)
+              if os.path.exists(cls.categorized_documents_file):
+                  os.remove(cls.categorized_documents_file)
+      
+          def test_integration(self):
+              # Step 1: Document scanning
+              documents = scan_directories(self.base_path)
+      
+              # Simulate categorization based on file extension
+              categorized_documents = {course: [extract_text_from_document(path) for path in paths]
+                                       for course, paths in documents.items()}
+      
+              with open(self.categorized_documents_file, 'w') as f:
+                  json.dump(categorized_documents, f)
+      
+              # Step 2: Embedding documents
+              embeddings = embed_documents(categorized_documents)
+              np.save(self.embeddings_file, embeddings)
+      
+              # Step 3: Store embeddings in FAISS index
+              index = store_embeddings_in_faiss(embeddings)
+              save_faiss_index(index, self.index_file)
+      
+              # Step 4: Query the FAISS index
+              D, I = query_index(self.query)
+      
+              # Step 5: Generate response using LLaMA
+              response = generate_response(self.query, I)
+              print(response)
+      
+              # Assertions can be added here to check for expected results
+      
+      
+      if __name__ == '__main__':
+          unittest.main()
+```
+
+##
+
 ## Week 1
 
 **Article Notes: What is retrieval-augmented generation?**
