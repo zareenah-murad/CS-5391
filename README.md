@@ -21,7 +21,13 @@ Weekly progress updates for our CS 5391 Project exploring Retrieval Augmented Ge
 * I ran the code through the python debugger and experimented with creating a new virtual environment and reinstalling all modules
 * When I tested each component individually they worked fine, I can load the models, extract text from different file types, generate embeddings, and create a FAISS index
 * But, for some reason when I run the search engine altogether there is a seg fault
-* Still have yet to pinpoint the reason
+
+**Next Steps**
+* Pinpoint the reason for the segmentation fault
+* Reseach Dot Product Similarity (vs. Cosine Similarity)
+* Watch video on how to build agents: https://youtu.be/AxnL5GtWVNA?si=wnxBmJmKh46SjpTr
+* Look into Google Colab and agent setup (give it a spreadsheet, ask it to summarize)
+* Consider how the concept of agents affects the future of coding and teaching CS?
 
 ### Code
 
