@@ -93,8 +93,8 @@ Manages indexing and retrieval of documents using embeddings
 
 **search_engine.py**
 
-      Acts as the main interface, orchestrating the whole search engine process
-      ``` 
+Acts as the main interface, orchestrating the whole search engine process
+``` 
       import os
       import faiss
       import numpy as np
@@ -141,14 +141,12 @@ Manages indexing and retrieval of documents using embeddings
       
       if __name__ == "__main__":
           main()
-      
-      
-``` 
+```
 
 **model_utils.py**
 
 Handles all operations related to loading models and generating text embeddings
-``` 
+```
       from sentence_transformers import SentenceTransformer
       import faiss
       import torch
@@ -171,8 +169,7 @@ Handles all operations related to loading models and generating text embeddings
           """Retrieves a general Hugging Face model and its corresponding tokenizer based on a given model name."""
           tokenizer = AutoTokenizer.from_pretrained(model_name)
           model = AutoModel.from_pretrained(model_name)
-          return model, tokenizer
-      
+          return model, tokenizer 
 ```
 
 ##
