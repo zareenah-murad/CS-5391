@@ -15,12 +15,18 @@ Weekly progress updates for our CS 5391 Project exploring Retrieval Augmented Ge
 * I got Hugging Face and NVIDIA API Keys when working off the article a little bit ago and decided to work with the HF one for this project
 * I created an environment_var.sh file with my API key, I had to %chmod +x environment_var.sh and %source environment_var.sh before running the code
 * I separated the code out into four scripts: text_extraction.py, indexer.py, search_engine.py, and model_utils.py
+
+**Segmentation Fault**
 * When I ran the entire search engine, I got a segmentation fault
-* So, I isolated ad tested each individual component: text extraction, loading models, embedding generation, indexing
+* So, I isolated and tested each individual component: text extraction, loading models, embedding generation, indexing
 * I reintegrated each component after making some changes and confirming that they worked to try and pinpoint the issue
 * I ran the code through the python debugger and experimented with creating a new virtual environment and reinstalling all modules
-* When I tested each component individually they worked fine, I can load the models, extract text from different file types, generate embeddings, and create a FAISS index
-* But, for some reason when I run the search engine altogether there is a seg fault
+* When I isolated the creation of the FAISS index and issue came up. The code cas trying to call .cpu() on a numpy.ndarray object. This method is specific to PyTorch tensors and the embeddings were already in NumPy format. So, to resolve this, I took out the conversion to NumPy array format cpu().detach.numpy()
+* Ran into another error regarding type compatibility between PyTorch and NumPy when trying to use FAISS. The tensor was still on a non-CPU device and I was attempting to convert it directly to a NumPy array without first transferring it to CPU memory. So I added code to ensure that embeddings were on the CPU and then converted to NumPy arrays. 
+* When I imported torch I got a segmentation fault again.
+* I created a test script for model loading and that worked. I tested the model with basic input and it was able to generate embeddings. So the issue is somewhere in the workflow when I put everything together. 
+* I confirmed that all components worked fine individually (I can load the models, extract text from different file types, generate embeddings, and create a FAISS index), but, for some reason when I run the search engine altogether there is a seg fault.
+
 
 **Next Steps**
 * Pinpoint the reason for the segmentation fault
