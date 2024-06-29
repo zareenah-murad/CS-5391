@@ -1,6 +1,181 @@
 # CS-5391
 Weekly progress updates for our CS 5391 Project exploring Retrieval Augmented Generation and Large Language Models.
 
+## Week 3
+
+**Starting Over from Scratch**
+* Asked ChatGPT how to create a vector database on my local machine
+* These were the steps provided: choose a vector database library, install required libraries, prepare your data, prepare your dataset of vectors, create and train the index , perform searches, save and load the index
+* I was able to successfully build the RAG and run it locally using Langchain, Ollama, and Streamlit based on the article in week 1, now I’m going to adopt that code to create a local generative AI search engine using RAG
+* Made some code modifications as recommended by chat GPT
+* Created a requirements.txt file, created a virtual environment, installed requirements, and upgraded pip
+* I ran the search engine, which resulted in a Streamlit tab in my browser
+* I realized that for this project I don't actually need to be using Streamlit right now, so I decided to start from scratch with starter code from chatGPT
+* When testing the code I had an error with RAGChain, I needed to import it from rag and not langchain_community
+* I got Hugging Face and NVIDIA API Keys when working off the article a little bit ago and decided to work with the HF one for this project
+* I created an environment_var.sh file with my API key, I had to %chmod +x environment_var.sh and %source environment_var.sh before running the code
+* I separated the code out into four scripts: text_extraction.py, indexer.py, search_engine.py, and model_utils.py
+* When I ran the entire search engine, I got a segmentation fault
+* So, I isolated ad tested each individual component: text extraction, loading models, embedding generation, indexing
+* I reintegrated each component after making some changes and confirming that they worked to try and pinpoint the issue
+* I ran the code through the python debugger and experimented with creating a new virtual environment and reinstalling all modules
+* When I tested each component individually they worked fine, I can load the models, extract text from different file types, generate embeddings, and create a FAISS index
+* But, for some reason when I run the search engine altogether there is a seg fault
+* Still have yet to pinpoint the reason
+
+### Code
+
+**text_extraction.py**
+
+Extracts readable text from .docx, .pdf, .pptx, and .xlsx file types
+``` 
+      import PyPDF2
+      import pptx
+      import openpyxl
+      from docx import Document
+      
+      def read_docx(file_path):
+          doc = Document(file_path)
+          return " ".join([para.text for para in doc.paragraphs if para.text])
+      
+      def read_pdf(file_path):
+          with open(file_path, "rb") as file:
+              reader = PyPDF2.PdfReader(file)
+              text = [page.extract_text() for page in reader.pages if page.extract_text()]
+          return " ".join(text)
+      
+      def read_pptx(file_path):
+          ppt = pptx.Presentation(file_path)
+          text = []
+          for slide in ppt.slides:
+              for shape in slide.shapes:
+                  if hasattr(shape, "text") and shape.text:
+                      text.append(shape.text)
+          return " ".join(text)
+      
+      def read_xlsx(file_path):
+          workbook = openpyxl.load_workbook(file_path, data_only=True)
+          text = []
+          for sheet in workbook:
+              for row in sheet.iter_rows(values_only=True):
+                  if any(row):
+                      text.append(" ".join([str(cell) for cell in row if cell is not None]))
+          return " ".join(text)
+
+      
+      
+``` 
+
+**indexer.py**
+
+Manages indexing and retrieval of documents using embeddings
+``` 
+      from model_utils import get_embeddings_model, get_embeddings
+      import numpy as np
+      import faiss
+      import json
+      
+      def create_faiss_index(embeddings):
+          dimension = embeddings.shape[1]
+          index = faiss.IndexFlatL2(dimension)
+          index.add(embeddings)
+          return index
+      
+      def index_documents(texts, model_name):
+          model = get_embeddings_model(model_name)
+          embeddings = get_embeddings(texts, model)
+          faiss_index = create_faiss_index(embeddings)
+          faiss.write_index(faiss_index, "document_embeddings.faiss")
+          print("Index created and saved.")
+      
+      
+``` 
+
+**search_engine.py**
+
+      Acts as the main interface, orchestrating the whole search engine process
+      ``` 
+      import os
+      import faiss
+      import numpy as np
+      import torch
+      from text_extraction import read_docx, read_pdf, read_pptx, read_xlsx
+      from model_utils import get_embeddings_model, get_embeddings
+      
+      def create_faiss_index(embeddings):
+          print("Creating FAISS index...")
+          if isinstance(embeddings, torch.Tensor):
+              embeddings = embeddings.cpu().numpy()  # Convert to CPU and NumPy array
+          dimension = embeddings.shape[1]
+          index = faiss.IndexFlatL2(dimension)
+          index.add(embeddings)
+          print("FAISS index created successfully.")
+          return index
+      
+      def main():
+          print("Prompting for directory path...")
+          directory_path = input("Enter the directory path to index: ")
+          print("Loading embedding model...")
+          model = get_embeddings_model('sentence-transformers/msmarco-bert-base-dot-v5')
+          print("Model loaded successfully.")
+      
+          texts = []
+          print(f"Collecting texts from {directory_path}...")
+          for root, dirs, files in os.walk(directory_path):
+              for file in files:
+                  file_path = os.path.join(root, file)
+                  if file.endswith('.docx'):
+                      texts.append(read_docx(file_path))
+                  elif file.endswith('.pdf'):
+                      texts.append(read_pdf(file_path))
+                  # Include other file types similarly
+      
+          print("Generating embeddings...")
+          embeddings = get_embeddings(texts, model)
+          print("Embeddings generated successfully. Shape:", embeddings.shape)
+      
+          print("Creating FAISS index...")
+          index = create_faiss_index(embeddings)
+      
+          print("System ready for queries or further processing.")
+      
+      if __name__ == "__main__":
+          main()
+      
+      
+``` 
+
+**model_utils.py**
+
+Handles all operations related to loading models and generating text embeddings
+``` 
+      from sentence_transformers import SentenceTransformer
+      import faiss
+      import torch
+      from transformers import AutoModel, AutoTokenizer  # Import additional Hugging Face libraries
+      
+      def get_embeddings_model(model_name):
+          """Retrieve a Sentence Transformer model based on the model name."""
+          model = SentenceTransformer(model_name)
+          return model
+      
+      def get_embeddings(texts, model):
+          """Generate embeddings for a list of texts using a provided model."""
+          return model.encode(texts, convert_to_tensor=True)
+      
+      def generate_response(query):
+          """Placeholder function for generating responses using LLaMA3."""
+          return "Response generation based on LLaMA3 needs to be implemented."
+      
+      def get_model_and_tokenizer(model_name):
+          """Retrieves a general Hugging Face model and its corresponding tokenizer based on a given model name."""
+          tokenizer = AutoTokenizer.from_pretrained(model_name)
+          model = AutoModel.from_pretrained(model_name)
+          return model, tokenizer
+      
+```
+
+##
 
 ## Week 2
 
