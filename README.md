@@ -1,6 +1,295 @@
 # CS-5391
 Weekly progress updates for our CS 5391 Project exploring Retrieval Augmented Generation and Large Language Models.
 
+
+## Week 4
+
+**Progress**
+* Still stuck at that segmentation fault 
+* Decided to simplify, create a local RAG search engine that can extract text and create embeddings and then compare using dot product and cosine similarity 
+* It was simple code (see below), so getting it to work wasn’t too laborious, this was the initial output
+
+          (env) zareenahmurad@Zareenahs-MBP compare_similarity % python3 search_engine.py
+          Script started.
+          Model and tokenizer loaded.
+          Enter the directory path to index: /Users/zareenahmurad/Desktop/testdocs
+          Skipped unsupported file type: /Users/zareenahmurad/Desktop/testdocs/.DS_Store
+          No text extracted from Unknown: /Users/zareenahmurad/Desktop/testdocs/.DS_Store
+          No text extracted from PPTX: /Users/zareenahmurad/Desktop/testdocs/Local LLM onGenuseServers.pptx
+          Processed DOCX: /Users/zareenahmurad/Desktop/testdocs/Impact of Climate Change.docx
+          Processed XLSX: /Users/zareenahmurad/Desktop/testdocs/Ramadan 23.xlsx
+          Processed PDF: /Users/zareenahmurad/Desktop/testdocs/OSS_LLMs.pdf
+          Processed DOCX: /Users/zareenahmurad/Desktop/testdocs/History/Printing Press.docx
+          Processed DOCX: /Users/zareenahmurad/Desktop/testdocs/History/Industrial Revolution.docx
+          Processed DOCX: /Users/zareenahmurad/Desktop/testdocs/History/Fall of Roman Empire.docx
+          Generating embeddings for 6 documents...
+          Embeddings generated.
+          Enter your query to find similar documents: climate change
+          
+          Results using Dot Product:
+          Score: 99.0512, Text: The Fall of the Roman Empire: Causes and Consequences The fall of the Roman Empire in the 5th century CE marked a significant turning point in European history, leading to the fragmentation of the Wes...
+          Score: 97.1898, Text: Verif.ai: Towards an Open-Source Scientific
+          Generative Question-Answering System with
+          Referenced and Verifiable Answers
+          1stMilo ˇs Ko ˇsprdi ´c
+          Institute for Artificial Intelligence Research
+          and Devel...
+          Score: 96.0016, Text: The Impact of Climate Change on Coral Reefs Coral reefs, often referred to as the "rainforests of the sea," are among the most diverse and productive ecosystems on Earth. However, they are increasingl...
+          Score: 84.6538, Text: The Industrial Revolution: Transforming Society and Economy The Industrial Revolution, which began in Britain in the late 18th century and spread to other parts of the world, marked a profound transfo...
+          Score: 79.7959, Text: The Influence of the Printing Press on the Protestant Reformation The advent of the printing press in the mid-15th century, invented by Johannes Gutenberg, played a pivotal role in the spread of the P...
+          
+          
+          Results using Cosine Similarity:
+          Score: 0.3212, Text: The Fall of the Roman Empire: Causes and Consequences The fall of the Roman Empire in the 5th century CE marked a significant turning point in European history, leading to the fragmentation of the Wes...
+          Score: 0.3182, Text: Verif.ai: Towards an Open-Source Scientific
+          Generative Question-Answering System with
+          Referenced and Verifiable Answers
+          1stMilo ˇs Ko ˇsprdi ´c
+          Institute for Artificial Intelligence Research
+          and Devel...
+          Score: 0.3114, Text: The Impact of Climate Change on Coral Reefs Coral reefs, often referred to as the "rainforests of the sea," are among the most diverse and productive ecosystems on Earth. However, they are increasingl...
+          Score: 0.2742, Text: The Industrial Revolution: Transforming Society and Economy The Industrial Revolution, which began in Britain in the late 18th century and spread to other parts of the world, marked a profound transfo...
+          Score: 0.2571, Text: The Influence of the Printing Press on the Protestant Reformation The advent of the printing press in the mid-15th century, invented by Johannes Gutenberg, played a pivotal role in the spread of the P…
+
+
+* Next I added functionality so that the code could handle multiple queries without restarting the entire script by adding a loop that continuously prompts the user for new queries until they decide to exit
+
+
+**Opportunities for Improvement**
+* UI: make web interface using Flask or Django, include auto-complete suggestions, query correction, or more complex query handling (ex: natural language queries)
+* Performance optimization: implement caching for frequently accessed documents or popular queries, use python’s multiprocessing capabilities to handle file reading, text extraction, and embedding generation in parallel
+* Advanced query handling: integrate more advanced NLP models that understand context/semantics of queries (like BERT or GPT), implement a mechanism to learn from user feedback to improve search results over time
+* Adding RAG and connecting to Hugging Face - need to index the data and store in some sort of database, implement RAG using transformers, develop a retrieval system that can query your indexed database based on the user's search query, once relevant texts are retrieved using RAG, feed them to Llama3 to generate answers
+* To use LLaMA3, download the model, use the transformers library to load LLaMA3 with your API key
+```
+      from transformers import AutoModelForCausalLM, AutoTokenizer
+      tokenizer = AutoTokenizer.from_pretrained("Model-Name")
+      model = AutoModelForCausalLM.from_pretrained("Model-Name", use_auth_token='your_hf_api_key')
+``` 
+
+**7/2 Meeting Notes**
+* Time to come up with a project that we all work toward
+* Knowledge Graphs: the lines that connect the nodes of the graph explain the relationship between the nodes
+* Graph RAG: many people think the best way to do RAG is by finding the most relevant text, creating a knowledge graph, and then sending the graph to the LLM
+* Neo4j has tools for knowledge graphs 
+* Project Idea: investigating the intersection between RAG and knowledge graphs, using multiple agents
+* One agent gets the text, one runs the Neo4j and creates a graph, another agent sends the graph to the LLM
+* Need to choose a domain to work off of (maybe SMU Undergraduate catalog)
+* Going to have a query and a vector database, extract the most relevant documents, then pass it to a tool to do Named-Entity Recognition 
+* This project would cover embeddings, vector databases, knowledge graphs, agents
+* Use Beautiful Soup - Python web scraping library
+* Create a Github Repo for our project 
+
+**Steps for the Project (as outlined by Dr. C)**
+* Take text and create a vector database
+* Get user query and extract the most relevant documents 
+* Given a set of documents, create a knowledge graph (neo4j)
+* Take a knowledge graph and feed it to an LLM 
+* Once you get it to work, you can compare different LLMs
+* Could also do a Graph RAG vs. basic RAG comparison 
+* Once everything works, incorporate agents (icing on the cake)
+
+
+**7/5 Meeting with Ragtag Rascals**
+* Talked about the vision for our project - a CS Advisor Chatbot
+* Going to start small and work with just the Computer Science degree plan and see if we can get it to provide the user with the description of a course, what breadths/proficiences it satisfies, the number of credit hours, and if it has any prerequisites
+* Eventually we’d need to implement some way for the user to input their own information so that the chatbot can tailor it to the user’s circumstances, we discussed maybe having the user upload a PDF of their unofficial transcript 
+* Before we get started we’re all going to work on researching Knowledge Graphs and web scraping using Beautiful Soup 
+* We’re also each going to come up with a general big-picture approach to the project and then compare and ask Dr. C for his advice 
+
+**Additional Things To Do**
+* Look into Dot Product Similarity, compare it to Cosine Similarity
+* Watch David Ondrej agent youtube video
+* Look into Google Colab, agent setup, play around with agents (give it a spreadsheet, ask it to summarize)
+* Look at the Gaia Overview slides
+* Think about how agents will affect coding
+* Read Medium articles about Knowledge Graphs & Agents: From Conventional RAG to Graph RAG, The Synergy Between Large Language Models and Knowledge Graphs, LLM Knowledge Graph Builder: From Zero to GraphRAG in Five Minutes, + find some articles about agents
+
+
+### Code
+
+**text_extraction.py**
+
+``` 
+    import docx
+    from pptx import Presentation
+    import PyPDF2
+    import openpyxl
+    
+    def read_docx(file_path):
+        doc = docx.Document(file_path)
+        return ' '.join([para.text for para in doc.paragraphs if para.text])
+    
+    def read_pdf(file_path):
+        with open(file_path, "rb") as file:
+            reader = PyPDF2.PdfReader(file)
+            text = [page.extract_text() for page in reader.pages if page.extract_text()]
+        return ' '.join(text)
+    
+    def read_pptx(file_path):
+        ppt = Presentation(file_path)
+        return ' '.join(slide.shapes.text for slide in ppt.slides if hasattr(slide.shapes, "text"))
+    
+    def read_xlsx(file_path):
+        workbook = openpyxl.load_workbook(file_path, data_only=True)
+        text = []
+        for sheet in workbook:
+            for row in sheet.iter_rows(values_only=True):
+                if row:
+                    row_text = ' '.join(str(cell) for cell in row if cell is not None)
+                    text.append(row_text)
+        return ' '.join(text)
+      
+``` 
+
+**model_utils.py**
+
+``` 
+      import numpy as np
+      import torch
+      from transformers import AutoTokenizer, AutoModel
+      
+      def get_model_and_tokenizer(model_name='sentence-transformers/bert-base-nli-mean-tokens'):
+          tokenizer = AutoTokenizer.from_pretrained(model_name)
+          model = AutoModel.from_pretrained(model_name)
+          return model, tokenizer
+      
+      
+      # model_utils.py
+      def generate_embeddings(texts, model, tokenizer):
+          model.eval()
+          embeddings = []
+          with torch.no_grad():
+              for text in texts:
+                  inputs = tokenizer(text, return_tensors='pt', padding=True, truncation=True, max_length=512)
+                  outputs = model(**inputs)
+                  embeddings.append(outputs.last_hidden_state[:, 0, :].squeeze().cpu().numpy())
+      
+          if embeddings:  # Check if embeddings list is not empty
+              return np.vstack(embeddings)
+          else:
+              return np.array([])  # Return an empty numpy array if no embeddings were generated
+
+``` 
+
+**search_engine.py**
+
+``` 
+      import os
+      from text_extraction import read_docx, read_pdf, read_pptx, read_xlsx
+      from model_utils import get_model_and_tokenizer, generate_embeddings
+      from query_handler import handle_query
+      
+      def main():
+          print("Script started.")
+          model, tokenizer = get_model_and_tokenizer()
+          print("Model and tokenizer loaded.")
+      
+          directory_path = input("Enter the directory path to index: ")
+          texts = []
+          embeddings = []
+      
+          # Process documents only once
+          for root, dirs, files in os.walk(directory_path):
+              for file in files:
+                  file_path = os.path.join(root, file)
+                  text = None
+                  document_type = "Unknown"
+      
+                  if file_path.lower().endswith('.docx'):
+                      text = read_docx(file_path)
+                      document_type = "DOCX"
+                  elif file_path.lower().endswith('.pdf'):
+                      text = read_pdf(file_path)
+                      document_type = "PDF"
+                  elif file_path.lower().endswith('.pptx'):
+                      text = read_pptx(file_path)
+                      document_type = "PPTX"
+                  elif file_path.lower().endswith('.xlsx'):
+                      text = read_xlsx(file_path)
+                      document_type = "XLSX"
+                  else:
+                      print(f"Skipped unsupported file type: {file_path}")
+      
+                  if text:
+                      texts.append(text)
+                      print(f"Processed {document_type}: {file_path}")
+                  else:
+                      print(f"No text extracted from {document_type}: {file_path}")
+      
+          if texts:
+              print(f"Generating embeddings for {len(texts)} documents...")
+              embeddings = generate_embeddings(texts, model, tokenizer)
+              print("Embeddings generated.")
+      
+              # Handling multiple queries
+              while True:
+                  query = input("Enter your query to find similar documents (or type 'exit' to quit): ")
+                  if query.lower() == 'exit':
+                      print("Exiting the application.")
+                      break
+      
+                  results = handle_query(query, embeddings, texts, model, tokenizer)
+                  if results:
+                      print("Results using Dot Product:")
+                      for text, score in results.get("dot_product", []):
+                          print(f"Score: {score:.4f}, Text: {text[:200]}...")
+                      print("\nResults using Cosine Similarity:")
+                      for text, score in results.get("cosine_similarity", []):
+                          print(f"Score: {score:.4f}, Text: {text[:200]}...")
+                  else:
+                      print("No results to display or an error occurred.")
+          else:
+              print("No documents found or processed.")
+      
+      
+      if __name__ == "__main__":
+          main()
+
+``` 
+
+**query_handler.py**
+
+``` 
+      import numpy as np
+      
+      
+      def cosine_similarity(vec_a, vec_b):
+          norm_a = np.linalg.norm(vec_a)
+          norm_b = np.linalg.norm(vec_b)
+          if norm_a > 0 and norm_b > 0:
+              return np.dot(vec_a, vec_b) / (norm_a * norm_b)
+          else:
+              return 0  # Return 0 similarity if either vector is zero
+      
+      
+      def handle_query(query, embeddings, texts, model, tokenizer):
+          try:
+              model.eval()  # Ensure the model is in evaluation mode
+              inputs = tokenizer(query, return_tensors='pt', padding=True, truncation=True, max_length=512)
+              outputs = model(**inputs)
+              query_embedding = outputs.last_hidden_state[:, 0, :].squeeze().detach().cpu().numpy()  # Detach before converting to numpy
+      
+              dot_product_scores = np.dot(embeddings, query_embedding)
+              cosine_scores = [cosine_similarity(embed, query_embedding) for embed in embeddings if np.linalg.norm(embed) > 0]
+      
+              dot_product_indices = np.argsort(-dot_product_scores)
+              cosine_indices = np.argsort(-np.array(cosine_scores))
+      
+              results = {
+                  "dot_product": [(texts[i], dot_product_scores[i]) for i in dot_product_indices[:5]],
+                  "cosine_similarity": [(texts[i], cosine_scores[i]) for i in cosine_indices[:5]]
+              }
+          except Exception as e:
+              print(f"Error processing query: {e}")
+              return {}
+      
+          return results
+      
+
+```
+##
+
 ## Week 3
 
 **Starting Over from Scratch**
