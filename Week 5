@@ -64,7 +64,7 @@
 
 **Knowledge Graph & NER Models/Methods to Compare (according to ChatGPT)**
 
-* NER
+NER
 1. SpaCy:
    - Advantages: Fast, easy to use, well-documented.
    - Disadvantages: May not be as accurate as state-of-the-art transformer models.
@@ -79,7 +79,7 @@
    - Disadvantages: High computational cost, requires fine-tuning.
 
 
-* Knowledge Graph
+Knowledge Graph
 1. Google Knowledge Graph:
    - Advantages: Extensive, used in search engines, well-integrated with Google's services.
    - Disadvantages: Proprietary, limited access for public use.
