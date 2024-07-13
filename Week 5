@@ -1,0 +1,134 @@
+## Week 5
+
+**Progress**
+* No code this week, just doing research and planning out the upcoming project
+
+**GAIA (Generative Agent Integration Architecture) Slides**
+* GAIA: a collection of agents working together to solve user problems with generative AI, where agents select best technology alternatives based on user requirements
+* All communication between agents is via JSON
+* Start with user requirements
+* Agent1: Data Collector
+* Gathers text data (possibly multimodal) from sources based on user json
+* Saves file in a project repository
+* Output is json1 - original json plus text data
+* Agent2: Vector DB Agent
+* Selects an embeddings, selects a Vector DB, chooses a chunking approach, builds the VectorDB
+* Uses the user query to generate RagText for the LLM, saves the RagText to a file in the repo, adds fields to JSON2
+* Agent3: LLM Runner
+* Selects an LLM (based on domain and query), captures the result of the query, writes to repository, adds to the json as JSON3
+* Agent4: Evaluator
+* Evaluates the output of the LLM (using one or more benchmarks)
+* Saves the results to the GAIA repo, adds evaluation results to json4, writes JSON4 to repo
+
+**7/9 Meeting Notes**
+* With knowledge graphs: the big thing is take text and make entities (NER), start with taking a big chunk of text and run the different NER algorithms and see how they perform 
+* Things to compare: text chunking algorithms, embeddings, name entity recognition, knowledge graphs
+* Look at performance, time, memory, think about how helpful it is 
+* Maybe we all work with one article or set of articles ?
+* Decided to split up the different main topics:
+* * Text chunking algorithms - Alex
+* * Embeddings - Ria & Grant
+* * Named entity recognition - Zareenah
+* * Knowledge graphs - Zareenah 
+
+
+**Investigation of Knowledge Graphs and NER (according to ChatGPT)**
+
+* Knowledge Graph Construction:
+     - Rule-based vs. Machine Learning-based methods.
+     - Graph databases (e.g., Neo4j) vs. RDF stores (e.g., Apache Jena).
+     - Automatic vs. manual curation.
+* NER Techniques:
+     - Rule-based NER.
+     - Machine Learning-based NER (e.g., Conditional Random Fields).
+     - Deep Learning-based NER (e.g., BiLSTM-CRF, Transformers).
+
+* Knowledge Graph Methods:
+     - Open Information Extraction (OpenIE) systems.
+     - Google Knowledge Graph vs. Microsoft Satori vs. IBM Watson.
+     - Knowledge Graph Embedding models (e.g., TransE, DistMult, ComplEx).
+* NER Models:
+     - SpaCy vs. Stanford NER vs. Flair vs. Stanza.
+     - Transformer-based models (e.g., BERT, RoBERTa, GPT-3, T5).
+
+* Performance Metrics:
+   - Precision, Recall, and F1-score for NER.
+   - Accuracy of entity linking and relationship extraction in knowledge graphs.
+   - Scalability and efficiency (e.g., time complexity, memory usage).
+
+* Application Contexts:
+   - Domain-specific vs. general-purpose NER.
+   - Industry applications (e.g., healthcare, finance, legal, e-commerce).
+   - Use cases like question answering, recommendation systems, or semantic search.
+
+
+**Knowledge Graph & NER Models/Methods to Compare (according to ChatGPT)**
+
+* NER
+1. SpaCy:
+   - Advantages: Fast, easy to use, well-documented.
+   - Disadvantages: May not be as accurate as state-of-the-art transformer models.
+2. Stanford NER:
+   - Advantages: Classical model, widely used in academia.
+   - Disadvantages: Slower, requires more manual feature engineering.
+3. Flair:
+   - Advantages: Uses contextual string embeddings, good performance on various languages.
+   - Disadvantages: May be slower compared to SpaCy.
+4. Transformers (BERT, RoBERTa, GPT-3, T5):
+   - Advantages: State-of-the-art accuracy, pre-trained models available.
+   - Disadvantages: High computational cost, requires fine-tuning.
+
+
+* Knowledge Graph
+1. Google Knowledge Graph:
+   - Advantages: Extensive, used in search engines, well-integrated with Google's services.
+   - Disadvantages: Proprietary, limited access for public use.
+2. Microsoft Satori:
+   - Advantages: Large-scale, used in Bing.
+   - Disadvantages: Proprietary, less publicly documented.
+3. IBM Watson Knowledge Graph:
+   - Advantages: Integration with other IBM Watson services, customizable.
+   - Disadvantages: Cost, complexity.
+4. Open Source Solutions (e.g., Neo4j, Apache Jena):
+   - Advantages: Flexible, customizable, community support.
+   - Disadvantages: Requires setup and maintenance, potential scalability issues.
+
+
+**Eventually Incorporating into a GenAI Search Engine**
+1. NER and Knowledge Graph Integration:
+   - Develop or integrate an NER model to extract entities from your documents.
+   - Construct or utilize a knowledge graph to map relationships between these entities.
+   - Example: Use SpaCy or a transformer-based NER model to extract entities and Neo4j or RDF stores to construct and manage your knowledge graph.
+
+2. Enhanced Retrieval with Knowledge Graphs:
+   - Implement semantic search by integrating your search mechanism with the knowledge graph to understand and retrieve contextually relevant documents.
+   - Example: Use Elasticsearch or another search engine integrated with your knowledge graph to improve search results.
+
+3. RAG Integration:
+   - Combine traditional search with LLMs:
+     - Retrieve documents using enhanced search techniques.
+     - Use LLMs (e.g., BERT, GPT-3) to generate responses based on retrieved documents.
+   - Example: Implement RAG using frameworks like Hugging Face’s `transformers` library.
+
+4. Agents for Continuous Improvement:
+   - Develop agents to automate the ingestion of new data into your knowledge graph.
+   - Example: Create agents using frameworks like LangChain to periodically extract, analyze, and update the knowledge graph with new information.
+
+
+
+**7/10 Meeting w/ Bivin Sadler**
+* My exploration of knowledge graphs will serve to help us decide whether we want Text RAG or Graph RAG for our CS advisor bot 
+* Agents communicate via JSON
+* Start off with user/client requirements
+	(id: <project name>
+	domain: <legal, academic, …>
+	docsSource: <list of…website, directory with files, web_search,..>
+	queries: <list of example queries users will be making> )
+* There are a number of public benchmarks to measure effectiveness of an LLM
+* Downside: these benchmarks are public, the LLMs are trained based on those benchmarks 
+* Can come up with benchmarks that are specific to the domain/client that you are working with
+
+**To Do**
+* Continue researching Knowledge Graphs and NER
+* Create a simple project that compare effectiveness of different models and methods of Knowledge Graphs and NER 
+* Test these models on SMU catalog information (we need to find which models/methods work best for our specific project context)
