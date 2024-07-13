@@ -133,7 +133,7 @@ Knowledge Graph
 
 **To Do**
 * Continue researching Knowledge Graphs and NER
-* Create a simple project that compare effectiveness of different models and methods of Knowledge Graphs and NER 
+* Create a simple project that compares effectiveness of different models and methods of Knowledge Graphs and NER 
 * Test these models on SMU catalog information (we need to find which models/methods work best for our specific project context)
 
 ##
