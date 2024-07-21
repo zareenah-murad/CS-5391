@@ -1,0 +1,182 @@
+## Week 6
+
+**7/16 Meeting**
+* Claude is better than chatGPT at creating RDF of text (see photo below)
+* Namespaces: collections of predefined terms that exist, a fixed vocabulary that someone has created over time, RDFs are the technology
+* Marked by the prefix rdf: or rdfs: 
+* Tools like (GLiNER, Spacy, etc) are more focused on you specifying what your interests are / what your domain is
+* PROJECT idea: compare the efficacy of Claude AI vs. the tools that exist 
+* Take a chunk of the catalog and see what Claude AI does with it
+* Entities: degree requirements, degree plans, electives, core classes, etc
+* Some models of knowledge graphs will only consider the beginning and end of the text and it will ignore the middle 
+* Experiment with different queries (related to the beginning, middle, and end)
+* You can ask Claude to summarize the information from an rdf
+* You can search a knowledge graph - neo4j has something called Cipher ?
+* If the query is related to python, you could search the knowledge graph and say give me all the info related to python and then feed those relevant parts of the knowledge graph to the LLM
+* Could take a course syllabus and ask Claude to make an rdf
+* If it doesn’t look great you can specify and tell it to focus on credit hours, prerequisites, etc 
+
+
+**Article Notes: Prompt Engineering 101 - Frank Coyle**
+* Prompt engineering: learning to communicate with AI models more effectively 
+* Process of an LLM interpreting a prompt
+* Tokenization: breaking the prompt down into tokens, storing in the context window
+* Pattern Matching: LLM compares the patterns of the tokens to training data, generates a probability distribution for what tokens may come next
+* Response Generation: model selects the next best word based on probabilities and repeats that until formulating a response
+* First few words of the prompt set the tone (ex: exciting, controversial, tragic, etc)
+* Add as much context to the prompt as you can
+* Few-Shot Learning: technique to improve performance of LLMs, provide a small # of examples within the prompt to guide the model’s output
+* Role Playing: strategy to getting a more relevant response (ex: you’re a professor of __ , explain ___)
+* Tag-Based Prompting: use bracketed tags to organize and clarify components of the prompt (ex: <role>Expert physicist</role>, can specify role, audience, task, style, format, constraints, length, etc)
+* Chain of Thought Prompting: improves performance on complex reasoning tasks, prompt the model and ask it to show it’s reasoning step-by-step
+
+
+**Article: Improving RAG Performance Using Rerankers - Het Trivedi**
+
+**Article Notes: From Conventional RAG to Graph RAG - Terence Lucas Yap**
+* Retrieval Augmented Generation (RAG): introduced to improve LLMs by incorporating info from external, reliable knowledge bases
+* Two phases of RAG: retrieval and content generation
+* Retrieval Phase: algorithm locates documents with content that’s semantically related to the query, usually calculates relevance using cosine similarity between vectors, appends the relevant info to the prompt
+* Content Generation Phase: LLM combines the augmented prompt with its own training data to produce a response
+* Graph RAG: builds on the concept of RAG by leveraging on knowledge graphs
+* It integrates the structured data from a KG into the LLM’s processing
+* The structure of KGs (edges representing the relationships between nodes) improves the LLM’s capacity to generate responses, it can access precise, relevant data 
+
+**Article Notes: LLM Knowledge Graph Builder: From Zero to GraphRAG in Five Minutes - Morgan Senechal**
+* How Neo4j works
+* Data Ingestion: supports various data sources
+* Entity Recognition: uses LLms to identify/extract entities and relationships from unstructured text
+* Graph Construction: converts recognized entities and relationships into a graph 
+* User Interface: intuitive web interface for users to interact with the application, upload data sources, visualized the graph, interact with a RAG agent
+* Can run this locally using this Github repo
+
+
+**Article: Web Scraping with Python Using Beautiful Soup - Mayank Gupta**
+
+
+**Claude AI RDF of the Computer Science BS Catalog Page**
+* Prompt: "I have a pdf of a degree plan. Can you make an rdf of it? Make sure to take note of courses, prerequisites, credits."
+``` 
+    @prefix smu: <http://example.com/smu/> .
+    @prefix rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
+    @prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+    
+    
+    smu:ComputerScienceBS rdf:type smu:Degree .
+    smu:ComputerScienceBS smu:totalCredits "120"^^xsd:integer .
+    smu:ComputerScienceBS smu:majorCredits "92-95"^^xsd:string .
+    
+    
+    # Mathematics and Science Courses
+    smu:MATH1337 rdf:type smu:Course ;
+        rdfs:label "Calculus I" ;
+        smu:credits "3"^^xsd:integer .
+    
+    
+    smu:MATH1338 rdf:type smu:Course ;
+        rdfs:label "Calculus II" ;
+        smu:credits "3"^^xsd:integer .
+    
+    
+    smu:MATH1340 rdf:type smu:Course ;
+        rdfs:label "Consolidated Calculus" ;
+        smu:credits "3"^^xsd:integer .
+    
+    
+    smu:MATH3304 rdf:type smu:Course ;
+        rdfs:label "Introduction to Linear Algebra" ;
+        smu:credits "3"^^xsd:integer .
+    
+    
+    smu:CS2353 rdf:type smu:Course ;
+        rdfs:label "Discrete Computational Structures" ;
+        smu:credits "3"^^xsd:integer .
+    
+    
+    smu:CS4340 rdf:type smu:Course ;
+        rdfs:label "Statistical Methods for Engineers and Applied Scientists" ;
+        smu:credits "3"^^xsd:integer .
+    
+    
+    # Computer Science Core Courses
+    smu:CS1341 rdf:type smu:Course ;
+        rdfs:label "Principles of Computer Science I" ;
+        smu:credits "3"^^xsd:integer .
+    
+    
+    smu:CS1342 rdf:type smu:Course ;
+        rdfs:label "Principles of Computer Science II" ;
+        smu:credits "3"^^xsd:integer ;
+        smu:prerequisite smu:CS1341 .
+    
+    
+    smu:CS2340 rdf:type smu:Course ;
+        rdfs:label "Computer Organization" ;
+        smu:credits "3"^^xsd:integer .
+    
+    
+    smu:CS2341 rdf:type smu:Course ;
+        rdfs:label "Data Structures" ;
+        smu:credits "3"^^xsd:integer .
+    
+    
+    smu:CS3341 rdf:type smu:Course ;
+        rdfs:label "Foundations of Modern Computing" ;
+        smu:credits "3"^^xsd:integer .
+    
+    
+    smu:CS3353 rdf:type smu:Course ;
+        rdfs:label "Fundamentals of Algorithms" ;
+        smu:credits "3"^^xsd:integer .
+    
+    
+    smu:CS5328 rdf:type smu:Course ;
+        rdfs:label "Software Engineering" ;
+        smu:credits "3"^^xsd:integer .
+    
+    
+    smu:CS5330 rdf:type smu:Course ;
+        rdfs:label "Databases" ;
+        smu:credits "3"^^xsd:integer .
+    
+    
+    smu:CS5343 rdf:type smu:Course ;
+        rdfs:label "Operating Systems" ;
+        smu:credits "3"^^xsd:integer .
+    
+    
+    smu:CS5344 rdf:type smu:Course ;
+        rdfs:label "Computer Networks and Distributed Systems" ;
+        smu:credits "3"^^xsd:integer .
+    
+    
+    smu:CS5351 rdf:type smu:Course ;
+        rdfs:label "Senior Design" ;
+        smu:credits "3"^^xsd:integer .
+    
+    
+    # Specializations
+    smu:AIMLSpecialization rdf:type smu:Specialization ;
+        rdfs:label "Artificial Intelligence and Machine Learning Specialization" ;
+        smu:requiredCredits "9"^^xsd:integer ;
+        smu:requiredCourse smu:CS5320 ;
+        smu:requiredCourse smu:CS5324 .
+    
+    
+    smu:CS5320 rdf:type smu:Course ;
+        rdfs:label "Artificial Intelligence" ;
+        smu:credits "3"^^xsd:integer .
+    
+    
+    smu:CS5324 rdf:type smu:Course ;
+        rdfs:label "Machine Learning in Python" ;
+        smu:credits "3"^^xsd:integer .
+``` 
+
+
+
+**To Do**
+* Figure out beautiful soup web scraping and being able to enter the links in the catalog page in order to see prerequisites
+* Ask Chat GPT and other genAI to create an RDF of the catalog
+* Run code locally to create an RDF of the catalog using Spacy, GLiNER, LangChain
+* Compare the RDFs 
