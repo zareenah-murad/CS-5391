@@ -53,6 +53,7 @@
 
 **Article: Web Scraping with Python Using Beautiful Soup - Mayank Gupta**
 
+#
 
 **Claude AI RDF of the Computer Science BS Catalog Page**
 * Prompt: "I have a pdf of a degree plan. Can you make an rdf of it? Make sure to take note of courses, prerequisites, credits."
@@ -179,4 +180,4 @@
 * Figure out beautiful soup web scraping and being able to enter the links in the catalog page in order to see prerequisites
 * Ask Chat GPT and other genAI to create an RDF of the catalog
 * Run code locally to create an RDF of the catalog using Spacy, GLiNER, LangChain
-* Compare the RDFs 
+* Compare the RDFs
