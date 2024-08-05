@@ -567,3 +567,7 @@ Adaptation to Specific Needs: Unlike general-purpose models, SpaCy’s custom im
 **Comparing the Three Approaches**
 * Claude and ChatGPT: These models are designed for a broad range of NLP tasks and generate text based on general patterns learned from diverse datasets. While they are powerful and versatile, they might not always provide the depth required for domain-specific RDF generation without additional customization.
 * SpaCy Custom Implementation: Provides a high level of control and specificity, allowing you to tailor the extraction and RDF generation process to meet your exact requirements.
+
+**Medium Article**
+* "The Power of Knowledge Graphs: Comparing Claude, ChatGPT, and SpaCY in Generating RDFs"
+* https://medium.com/@zareenahmurad/the-power-of-knowledge-graphs-comparing-claude-chatgpt-and-spacy-in-generating-rdfs-ef129bdf404a 
