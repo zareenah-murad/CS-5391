@@ -1,6 +1,578 @@
 # CS-5391
 Weekly progress updates for my CS 5391 course exploring Retrieval Augmented Generation and Large Language Models.
 
+## Week 7
+
+**8/1 Meeting**
+* Discussed the ethical implications of using AI to create animations of deceased relatives - Replika
+* For some people this could be a very positive tool, but for others it could seriously hinder the grieiving process
+* Medium Article - "Artificial Intelligence Will Keep Our Loved Ones Alive" - https://medium.com/@thomas_mac/artificial-intelligence-will-keep-our-loved-ones-alive-replika-ai-bot-google-duplex-2dc02eec55dc 
+
+
+**RDF Investigation**
+* For my Medium article I decided to compare Claude, ChatGPT, and a custom coded SpaCy implementation's ability to create an RDF from SMU's Computer Science BS Degree Plan
+* I decided to use the degree plan in hopes that my findings could inform our future CS Advisor Chatbot
+* For Claude and ChatGPT, I simply uploaded the PDf along with the prompt: “Create an RDF of this Computer Science (B.S.) degree plan”.
+* For the custom SpaCy implementation, I pasted the text directly into the code and ran the script.
+
+###
+**Custom Coded SpaCy Implementation**
+``` 
+      import spacy
+      import re
+      from rdflib import Graph, Literal, RDF, URIRef
+      from rdflib.namespace import RDFS, XSD
+      
+      # Load spaCy model
+      nlp = spacy.load("en_core_web_sm")
+      
+      # Sample text (you would replace this with your PDF content)
+      text = """
+      ***inserted the degree plan text here***
+      """
+      
+      # Function to extract course information
+      def extract_courses(text):
+          courses = []
+          lines = text.split('\n')
+          for line in lines:
+              match = re.match(r'(\w+\s\d+)\s*-\s*(.+)', line)
+              if match:
+                  course_code, course_name = match.groups()
+                  courses.append((course_code.strip(), course_name.strip()))
+          return courses
+      
+      # Extract courses
+      extracted_courses = extract_courses(text)
+      
+      # Create RDF graph
+      g = Graph()
+      
+      # Define namespaces
+      smu = URIRef("http://example.com/smu/")
+      g.bind("smu", smu)
+      
+      # Create nodes and relationships
+      degree = URIRef(smu + "ComputerScienceBS")
+      g.add((degree, RDF.type, smu + "Degree"))
+      g.add((degree, RDFS.label, Literal("Computer Science, B.S.")))
+      
+      for course_code, course_name in extracted_courses:
+          course_uri = URIRef(smu + course_code.replace(" ", ""))
+          g.add((course_uri, RDF.type, smu + "Course"))
+          g.add((course_uri, RDFS.label, Literal(course_name)))
+          g.add((degree, smu + "hasCourse", course_uri))
+      
+      # Perform NER on the text
+      doc = nlp(text)
+      
+      # Extract entities (this could be used for more advanced processing)
+      for ent in doc.ents:
+          if ent.label_ == "ORG":  # Organizations might be departments
+              dept_uri = URIRef(smu + ent.text.replace(" ", ""))
+              g.add((dept_uri, RDF.type, smu + "Department"))
+              g.add((dept_uri, RDFS.label, Literal(ent.text)))
+      
+      # Print the resulting RDF in Turtle format
+      print(g.serialize(format="turtle"))
+
+``` 
+
+### RDF Results
+
+**Claude AI RDF of the Computer Science BS Catalog Page**
+* Prompt: “Create an RDF of this Computer Science (B.S.) degree plan”
+``` 
+      @prefix rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
+      @prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+      @prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
+      @prefix : <http://example.org/cs-degree#> .
+      
+      :ComputerScienceBS a :Degree ;
+          rdfs:label "Computer Science, B.S." ;
+          :totalCredits "120"^^xsd:integer ;
+          :hasRequirement :MathAndScience, :ComputerScienceCore, :TechnicalElectives, :TracksAndSpecializations, :EngineeringLeadership, :AdvancedMajorElectives .
+      
+      :MathAndScience a :Requirement ;
+          rdfs:label "Mathematics and Science" ;
+          :creditHours "24-26"^^xsd:string ;
+          :hasSubRequirement :Calculus, :LinearAlgebra, :DiscreteComputationalStructures, :StatisticalMethods, :MathOrStatCourse, :ScienceCourses .
+      
+      :ComputerScienceCore a :Requirement ;
+          rdfs:label "Computer Science Core" ;
+          :creditHours "33"^^xsd:integer ;
+          :hasCourse :CS1341, :CS1342, :CS2340, :CS2341, :CS3341, :CS3353, :CS5328, :CS5330, :CS5343, :CS5344, :CS5351 .
+      
+      :TechnicalElectives a :Requirement ;
+          rdfs:label "Technical Electives" ;
+          :creditHours "9"^^xsd:integer .
+      
+      :TracksAndSpecializations a :Requirement ;
+          rdfs:label "Tracks and Specializations" ;
+          :creditHours "9-10"^^xsd:string ;
+          :hasTrack :AIAndMachineLearning, :ComputerOrganization, :DataEngineering, :GameDevelopment, :General, :Research, :Security, :SoftwareEngineering .
+      
+      :EngineeringLeadership a :Requirement ;
+          rdfs:label "Engineering Leadership" ;
+          :creditHours "6"^^xsd:integer .
+      
+      :AdvancedMajorElectives a :Requirement ;
+          rdfs:label "Advanced Major Electives" ;
+          :creditHours "11"^^xsd:integer .
+      
+      :AIAndMachineLearning a :Track ;
+          rdfs:label "Artificial Intelligence and Machine Learning Specialization" ;
+          :creditHours "9"^^xsd:integer ;
+          :hasCourse :CS5320, :CS5324 .
+      
+      :ComputerOrganization a :Track ;
+          rdfs:label "Computer Organization Specialization" ;
+          :creditHours "9"^^xsd:integer ;
+          :hasCourse :CS3381, :CS4381 .
+      
+      :DataEngineering a :Track ;
+          rdfs:label "Data Engineering Track" ;
+          :creditHours "9"^^xsd:integer ;
+          :hasCourse :CS5331, :CS5322 .
+      
+      :GameDevelopment a :Track ;
+          rdfs:label "Game Development Track" ;
+          :creditHours "10"^^xsd:integer ;
+          :hasCourse :HGME5121, :HGME5122, :HGME5311, :HGME5592 .
+      
+      :General a :Track ;
+          rdfs:label "General Track" ;
+          :creditHours "9"^^xsd:integer .
+      
+      :Research a :Track ;
+          rdfs:label "Research Track" ;
+          :creditHours "9"^^xsd:integer ;
+          :hasCourse :CS4397, :CS5350 .
+      
+      :Security a :Track ;
+          rdfs:label "Security Track" ;
+          :creditHours "9"^^xsd:integer ;
+          :hasCourse :CS5339, :CS5349 .
+      
+      :SoftwareEngineering a :Track ;
+          rdfs:label "Software Engineering Specialization" ;
+          :creditHours "9"^^xsd:integer ;
+          :hasCourse :CS5314, :CS5319, :CS5340 .
+      
+      # Define individual courses
+      :CS1341 a :Course ;
+          rdfs:label "Principles of Computer Science I" .
+      
+      :CS1342 a :Course ;
+          rdfs:label "Principles of Computer Science II" .
+      
+      # ... (other courses would be defined similarly)
+      
+      # Define math and science requirements
+      :Calculus a :Requirement ;
+          :hasOption :MATH1337and1338, :MATH1340 .
+      
+      :MATH1337and1338 a :Option ;
+          :hasCourse :MATH1337, :MATH1338 .
+      
+      :MATH1340 a :Course ;
+          rdfs:label "Consolidated Calculus" .
+      
+      :LinearAlgebra a :Requirement ;
+          :hasCourse :MATH3304 .
+      
+      :DiscreteComputationalStructures a :Requirement ;
+          :hasCourse :CS2353 .
+      
+      :StatisticalMethods a :Requirement ;
+          :hasOption :CS4340, :STAT4340, :OREM3340 .
+      
+      :MathOrStatCourse a :Requirement ;
+          rdfs:label "One 3000-level or higher MATH or STAT course" ;
+          :creditHours "3"^^xsd:integer .
+      
+      :ScienceCourses a :Requirement ;
+          :hasContentArea :Biology, :Chemistry, :Geology, :Physics .
+      
+      # ... (Content areas and their courses would be defined similarly)
+
+``` 
+
+#
+
+**ChatGPT RDF of the Computer Science BS Catalog Page**
+* Prompt: “Create an RDF of this Computer Science (B.S.) degree plan”
+``` 
+      @prefix cs: <http://example.org/cs_degree#> .
+      @prefix dc: <http://purl.org/dc/elements/1.1/> .
+      
+      cs:ComputerScienceBS a cs:Degree ;
+          dc:title "Computer Science, B.S." ;
+          cs:totalCreditHours "120" ;
+          cs:hasRequirement [
+              cs:requirementName "Mathematics and Science" ;
+              cs:creditHours "24-26" ;
+              cs:includesCourse cs:CalculusI, cs:CalculusII, cs:ConsolidatedCalculus, cs:IntroductionToLinearAlgebra, cs:DiscreteComputationalStructures, cs:StatisticalMethods, cs:3000LevelMathOrStat, cs:BiologyCourses, cs:ChemistryCourses, cs:GeologyCourses, cs:PhysicsCourses
+          ] ;
+          cs:hasRequirement [
+              cs:requirementName "Computer Science Core" ;
+              cs:creditHours "33" ;
+              cs:includesCourse cs:PrinciplesOfComputerScienceI, cs:PrinciplesOfComputerScienceII, cs:ComputerOrganization, cs:DataStructures, cs:FoundationsOfModernComputing, cs:FundamentalsOfAlgorithms, cs:SoftwareEngineering, cs:Databases, cs:OperatingSystems, cs:ComputerNetworksAndDistributedSystems, cs:SeniorDesign
+          ] ;
+          cs:hasRequirement [
+              cs:requirementName "Technical Electives" ;
+              cs:creditHours "9" ;
+              cs:electiveDescription "Nine credit hours of CS courses at the 3000 level or above as approved by the adviser."
+          ] ;
+          cs:hasRequirement [
+              cs:requirementName "Tracks and Specializations" ;
+              cs:creditHours "9-10" ;
+              cs:includesSpecialization cs:ArtificialIntelligenceAndMachineLearning, cs:ComputerOrganization, cs:DataEngineering, cs:GameDevelopment, cs:GeneralTrack, cs:ResearchTrack, cs:SecurityTrack, cs:SoftwareEngineeringSpecialization
+          ] ;
+          cs:hasRequirement [
+              cs:requirementName "Engineering Leadership" ;
+              cs:creditHours "6" ;
+              cs:includesCourse cs:EthicalIssuesInComputing, cs:TechnicalEntrepreneurship, cs:LeadershipForArchitectingSoftwareSystems, cs:AuthenticLeadership, cs:EngineeringCommunications, cs:EngineeringManagement
+          ] ;
+          cs:hasRequirement [
+              cs:requirementName "Advanced Major Electives" ;
+              cs:creditHours "11" ;
+              cs:electiveDescription "Advanced major elective in any CS course numbered 4000 or above as approved by the adviser."
+          ] .
+      
+      cs:ArtificialIntelligenceAndMachineLearning a cs:Specialization ;
+          cs:creditHours "9" ;
+          cs:includesCourse cs:ArtificialIntelligence, cs:MachineLearningInPython .
+      
+      cs:ComputerOrganization a cs:Specialization ;
+          cs:creditHours "9" ;
+          cs:includesCourse cs:DigitalLogicDesign, cs:DigitalComputerDesign .
+      
+      cs:DataEngineering a cs:Specialization ;
+          cs:creditHours "9" ;
+          cs:includesCourse cs:DataMining, cs:IntroductionToNaturalLanguageProcessing .
+      
+      cs:GameDevelopment a cs:Track ;
+          cs:creditHours "10" ;
+          cs:includesCourse cs:MathAndPhysicsI, cs:ProgrammingForCommercialGameEnginesI, cs:SoftwareDevelopmentForGamesI, cs:TeamGameProductionI .
+      
+      cs:GeneralTrack a cs:Track ;
+          cs:creditHours "9" ;
+          cs:includesCourse cs:4000LevelOrAboveCsCourses .
+      
+      cs:ResearchTrack a cs:Track ;
+          cs:creditHours "9" ;
+          cs:includesCourse cs:ResearchExperienceForUndergraduates, cs:AlgorithmEngineering .
+      
+      cs:SecurityTrack a cs:Track ;
+          cs:creditHours "9" ;
+          cs:includesCourse cs:ComputerSystemSecurity, cs:DataAndNetworkSecurity .
+      
+      cs:SoftwareEngineeringSpecialization a cs:Specialization ;
+          cs:creditHours "9" ;
+          cs:includesCourse cs:SoftwareTestingAndQualityAssurance, cs:SoftwareArchitectureAndDesign, cs:ServiceOrientedComputing .
+
+
+``` 
+
+**Custom SpaCy RDF of the Computer Science BS Catalog Page**
+* Prompt: “Create an RDF of this Computer Science (B.S.) degree plan”
+``` 
+      @prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+      @prefix smu: <http://example.com/smu/> .
+      smu:2340-ComputerOrganization a smu:Department ;
+          rdfs:label "2340 - Computer Organization" .
+      smu:AME a smu:Department ;
+          rdfs:label "AME" .
+      smu:AppliedScientists\(Students a smu:Department ;
+          rdfs:label "Applied Scientists (Students" .
+      smu:ArtificialIntelligenceandMachineLearningSpecialization a smu:Department ;
+          rdfs:label "Artificial Intelligence and Machine Learning Specialization" .
+      smu:CEE a smu:Department ;
+          rdfs:label "CEE" .
+      smu:CS a smu:Department ;
+          rdfs:label "CS" .
+      <http://example.com/smu/CS1341-PrinciplesofComputerScienceI
+      > a smu:Department ;
+          rdfs:label """CS 1341 - Principles of Computer Science I
+      """ .
+      smu:CS2353-DiscreteComputationalStructures a smu:Department ;
+          rdfs:label "CS 2353 - Discrete Computational Structures" .
+      smu:CS3341-FoundationsofModernComputing a smu:Department ;
+          rdfs:label "CS 3341 - Foundations of Modern Computing" .
+      <http://example.com/smu/CS3353-FundamentalsofAlgorithms
+      CS5328-SoftwareEngineering> a smu:Department ;
+          rdfs:label """CS 3353 - Fundamentals of Algorithms
+      CS 5328 - Software Engineering""" .
+      smu:CS3377-Ethical a smu:Department ;
+          rdfs:label "CS 3377 - Ethical" .
+      <http://example.com/smu/CS3381-DigitalLogicDesign
+      CS4381-DigitalComputerDesign> a smu:Department ;
+          rdfs:label """CS 3381 - Digital Logic Design
+      CS 4381 - Digital Computer Design""" .
+      smu:CS4340-StatisticalMethodsforEngineers a smu:Department ;
+          rdfs:label "CS 4340 - Statistical Methods for Engineers" .
+      <http://example.com/smu/CS4340/STAT4340> a smu:Department ;
+          rdfs:label "CS 4340/STAT 4340" .
+      smu:CS4360-TechnicalEntrepreneurship a smu:Department ;
+          rdfs:label "CS 4360 - Technical Entrepreneurship" .
+      smu:CS4397-Research a smu:Department ;
+          rdfs:label "CS 4397 - Research" .
+      <http://example.com/smu/CS5314-SoftwareTestingandQualityAssurance
+      CS> a smu:Department ;
+          rdfs:label """CS 5314 - Software Testing and Quality Assurance
+      CS""" .
+      <http://example.com/smu/CS5320-ArtificialIntelligence
+      CS5324-MachineLearning> a smu:Department ;
+          rdfs:label """CS 5320 - Artificial Intelligence
+      CS 5324 - Machine Learning""" .
+      <http://example.com/smu/CS5331-DataMining
+      > a smu:Department ;
+          rdfs:label """CS 5331 - Data Mining
+      """ .
+      smu:CS5339-ComputerSystemSecurity a smu:Department ;
+          rdfs:label "CS 5339 - Computer System Security" .
+      smu:CS5344-ComputerNetworksandDistributedSystems a smu:Department ;
+          rdfs:label "CS 5344 - Computer Networks and Distributed Systems" .
+      <http://example.com/smu/CS5351-SeniorDesign
+      TechnicalElectives> a smu:Department ;
+          rdfs:label """CS 5351 - Senior Design
+      Technical Electives""" .
+      smu:ComputerOrganizationSpecialization a smu:Department ;
+          rdfs:label "Computer Organization Specialization" .
+      smu:ComputerScienceBS a smu:Degree ;
+          rdfs:label "Computer Science, B.S." ;
+          smu:hasCourse smu:BIOL1301,
+              smu:BIOL1302,
+              smu:CEE2302,
+              smu:CEE3302,
+              smu:CHEM1303,
+              smu:CHEM1304,
+              smu:CS1341,
+              smu:CS1342,
+              smu:CS2340,
+              smu:CS2341,
+              smu:CS2353,
+              smu:CS3341,
+              smu:CS3353,
+              smu:CS3377,
+              smu:CS3381,
+              smu:CS4340,
+              smu:CS4360,
+              smu:CS4381,
+              smu:CS4397,
+              smu:CS5314,
+              smu:CS5317,
+              smu:CS5319,
+              smu:CS5320,
+              smu:CS5322,
+              smu:CS5324,
+              smu:CS5328,
+              smu:CS5330,
+              smu:CS5331,
+              smu:CS5339,
+              smu:CS5340,
+              smu:CS5343,
+              smu:CS5344,
+              smu:CS5349,
+              smu:CS5350,
+              smu:CS5351,
+              smu:GEOL1301,
+              smu:GEOL1305,
+              smu:GEOL1307,
+              smu:GEOL1313,
+              smu:GEOL1315,
+              smu:HGME5121,
+              smu:HGME5122,
+              smu:HGME5311,
+              smu:HGME5592,
+              smu:MATH1337,
+              smu:MATH1340,
+              smu:MATH3304,
+              smu:OREM3308,
+              smu:One3000,
+              smu:PHYS1303,
+              smu:PHYS1304,
+              smu:PHYS3305,
+              smu:Three3 .
+      smu:DataEngineeringTrack a smu:Department ;
+          rdfs:label "Data Engineering Track" .
+      smu:GeneralChemistryLaboratory a smu:Department ;
+          rdfs:label "General Chemistry Laboratory" .
+      smu:GuildhallProfessionalCertificate a smu:Department ;
+          rdfs:label "Guildhall Professional Certificate" .
+      smu:MagnetismLaboratory a smu:Department ;
+          rdfs:label "Magnetism Laboratory" .
+      smu:MechanicsLaboratory a smu:Department ;
+          rdfs:label "Mechanics Laboratory" .
+      <http://example.com/smu/ModernPhysics
+      ComputerScienceCore> a smu:Department ;
+          rdfs:label """Modern Physics
+      Computer Science Core""" .
+      smu:Physics a smu:Department ;
+          rdfs:label "Physics" .
+      smu:SMU a smu:Department ;
+          rdfs:label "SMU" .
+      smu:SMUDegreeRequirements a smu:Department ;
+          rdfs:label "SMU Degree Requirements" .
+      smu:SMUGuildhall a smu:Department ;
+          rdfs:label "SMU Guildhall" .
+      smu:Technical a smu:Department ;
+          rdfs:label "Technical" .
+      smu:TracksandSpecializations a smu:Department ;
+          rdfs:label "Tracks and Specializations" .
+      <http://example.com/smu/Undergraduates
+      CS5350-AlgorithmEngineering> a smu:Department ;
+          rdfs:label """Undergraduates
+      CS 5350 - Algorithm Engineering""" .
+      smu:University a smu:Department ;
+          rdfs:label "University" .
+      smu:theComputerScience a smu:Department ;
+          rdfs:label "the Computer Science" .
+      smu:theComputerScienceDepartment a smu:Department ;
+          rdfs:label "the Computer Science Department" .
+      smu:theCoxSchoolofBusiness a smu:Department ;
+          rdfs:label "the Cox School of Business" .
+      smu:BIOL1301 a smu:Course ;
+          rdfs:label "Introductory Biology/BIOL 1101 - Introductory Biology Lab" .
+      smu:BIOL1302 a smu:Course ;
+          rdfs:label "Introductory Biology/BIOL 1102 - Introductory Biology Lab" .
+      smu:CEE2302 a smu:Course ;
+          rdfs:label "Authentic Leadership" .
+      smu:CEE3302 a smu:Course ;
+          rdfs:label "Engineering Communications" .
+      smu:CHEM1303 a smu:Course ;
+          rdfs:label "General Chemistry/CHEM 1113 - General Chemistry Laboratory" .
+      smu:CHEM1304 a smu:Course ;
+          rdfs:label "General Chemistry/CHEM 1114 - General Chemistry Laboratory" .
+      smu:CS1341 a smu:Course ;
+          rdfs:label "Principles of Computer Science I" .
+      smu:CS1342 a smu:Course ;
+          rdfs:label "Principles of Computer Science II" .
+      smu:CS2340 a smu:Course ;
+          rdfs:label "Computer Organization" .
+      smu:CS2341 a smu:Course ;
+          rdfs:label "Data Structures" .
+      smu:CS2353 a smu:Course,
+              smu:Department ;
+          rdfs:label "CS 2353",
+              "Discrete Computational Structures" .
+      smu:CS3341 a smu:Course ;
+          rdfs:label "Foundations of Modern Computing" .
+      smu:CS3353 a smu:Course ;
+          rdfs:label "Fundamentals of Algorithms" .
+      smu:CS3377 a smu:Course ;
+          rdfs:label "Ethical Issues in Computing" .
+      smu:CS3381 a smu:Course ;
+          rdfs:label "Digital Logic Design" .
+      smu:CS4340 a smu:Course,
+              smu:Department ;
+          rdfs:label "CS 4340",
+              "Statistical Methods for Engineers and Applied Scientists (Students may fulfill the CS 4340 requirement by taking any one of CS 4340/STAT 4340, or OREM 3340.)" .
+      smu:CS4360 a smu:Course ;
+          rdfs:label "Technical Entrepreneurship" .
+      smu:CS4381 a smu:Course ;
+          rdfs:label "Digital Computer Design" .
+      smu:CS4397 a smu:Course ;
+          rdfs:label "Research Experience for Undergraduates" .
+      smu:CS5314 a smu:Course ;
+          rdfs:label "Software Testing and Quality Assurance" .
+      smu:CS5317 a smu:Course ;
+          rdfs:label "Leadership for Architecting Software Systems" .
+      smu:CS5319 a smu:Course ;
+          rdfs:label "Software Architecture and Design" .
+      smu:CS5320 a smu:Course ;
+          rdfs:label "Artificial Intelligence" .
+      smu:CS5322 a smu:Course ;
+          rdfs:label "Introduction to Natural Language Processing" .
+      smu:CS5324 a smu:Course ;
+          rdfs:label "Machine Learning in Python" .
+      smu:CS5328 a smu:Course ;
+          rdfs:label "Software Engineering" .
+      smu:CS5330 a smu:Course ;
+          rdfs:label "Databases" .
+      smu:CS5331 a smu:Course ;
+          rdfs:label "Data Mining" .
+      smu:CS5339 a smu:Course ;
+          rdfs:label "Computer System Security" .
+      smu:CS5340 a smu:Course ;
+          rdfs:label "Service-Oriented Computing" .
+      smu:CS5343 a smu:Course ;
+          rdfs:label "Operating Systems" .
+      smu:CS5344 a smu:Course ;
+          rdfs:label "Computer Networks and Distributed Systems" .
+      smu:CS5349 a smu:Course ;
+          rdfs:label "Data and Network Security" .
+      smu:CS5350 a smu:Course ;
+          rdfs:label "Algorithm Engineering" .
+      smu:CS5351 a smu:Course,
+              smu:Department ;
+          rdfs:label "CS 5351",
+              "Senior Design" .
+      smu:GEOL1301 a smu:Course ;
+          rdfs:label "Earth Systems" .
+      smu:GEOL1305 a smu:Course ;
+          rdfs:label "Oceanography" .
+      smu:GEOL1307 a smu:Course ;
+          rdfs:label "The Solar System" .
+      smu:GEOL1313 a smu:Course ;
+          rdfs:label "Earthquakes and Volcanoes" .
+      smu:GEOL1315 a smu:Course ;
+          rdfs:label "Introduction to Environmental Science" .
+      smu:HGME5121 a smu:Course ;
+          rdfs:label "Math and Physics I" .
+      smu:HGME5122 a smu:Course ;
+          rdfs:label "Programming for Commercial Game Engines I" .
+      smu:HGME5311 a smu:Course ;
+          rdfs:label "Software Development for Games I" .
+      smu:HGME5592 a smu:Course ;
+          rdfs:label "Team Game Production I" .
+      smu:MATH1337 a smu:Course ;
+          rdfs:label "Calculus I and MATH 1338 - Calculus II" .
+      smu:MATH1340 a smu:Course ;
+          rdfs:label "Consolidated Calculus" .
+      smu:MATH3304 a smu:Course ;
+          rdfs:label "Introduction to Linear Algebra" .
+      smu:OREM3308 a smu:Course ;
+          rdfs:label "Engineering Management" .
+      smu:One3000 a smu:Course ;
+          rdfs:label "level or higher MATH or STAT course (3 credit hours)" .
+      smu:PHYS1303 a smu:Course ;
+          rdfs:label "Introductory Mechanics/PHYS 1105 - Mechanics Laboratory" .
+      smu:PHYS1304 a smu:Course ;
+          rdfs:label "Introductory Electricity and Magnetism/PHYS 1106 - Electricity and Magnetism Laboratory" .
+      smu:PHYS3305 a smu:Course ;
+          rdfs:label "Introduction to Modern Physics" .
+      smu:Three3 a smu:Course ;
+          rdfs:label "hour, 4000-level or above CS courses approved by adviser" .
+
+``` 
+
+#
+
+**Why Did SpaCy Perform Better?**
+* 1. Domain-Specific Customization:
+Tailored Models: SpaCy allows you to train or fine-tune models specifically for your domain or task. This means you can create models that are highly specialized in recognizing and extracting entities and relationships relevant to your domain, leading to more accurate and detailed RDF triples.
+Custom Pipelines: You can design custom pipelines with SpaCy to focus on specific types of entities or relationships, ensuring that the RDF output is aligned with your precise needs.
+* 2. Precision in Extraction:
+Rule-Based Components: SpaCy supports rule-based components (like pattern matching) in addition to machine learning models. This can help capture specific patterns and relationships that may not be recognized by generic models.
+Dependency Parsing: SpaCy’s dependency parsing capabilities allow for a deeper understanding of sentence structure, which helps in accurately identifying complex relationships between entities.
+* 3. Direct Control Over RDF Generation:
+Explicit Mapping: With SpaCy, you have direct control over how extracted entities and relationships are mapped to RDF triples. This control allows you to ensure that the RDF triples are as detailed and accurate as possible.
+Custom Extraction Rules: You can define custom extraction rules to capture specific details that might be missed by more general-purpose models like Claude and ChatGPT.
+* 4. Focus on Structured Data:
+RDF Conversion: SpaCy’s output can be directly converted into RDF using libraries like RDFLib, allowing for precise structuring of data. This contrasts with Claude and ChatGPT, which may require additional processing to convert their outputs into RDF format.
+Consistency: By using SpaCy, you can maintain consistency in how entities and relationships are extracted and represented, reducing variability in the RDF data.
+* 5. Flexibility and Adaptability:
+Custom Training Data: You can train SpaCy models on specific datasets that reflect the types of information you are interested in, which improves the depth and relevance of the RDF triples generated.
+Adaptation to Specific Needs: Unlike general-purpose models, SpaCy’s custom implementations can be fine-tuned to focus on particular aspects of your data, leading to more comprehensive and relevant RDF output.
+
+**Comparing the Three Approaches**
+* Claude and ChatGPT: These models are designed for a broad range of NLP tasks and generate text based on general patterns learned from diverse datasets. While they are powerful and versatile, they might not always provide the depth required for domain-specific RDF generation without additional customization.
+* SpaCy Custom Implementation: Provides a high level of control and specificity, allowing you to tailor the extraction and RDF generation process to meet your exact requirements.
+
+##
+
 ## Week 6
 
 **7/16 Meeting**
